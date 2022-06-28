@@ -1,4 +1,5 @@
 # importing Libraries
+from socket import PACKET_MULTICAST
 import pandas as pd
 import numpy as np
 import cv2
@@ -60,15 +61,16 @@ def parse_opt():
     parser.add_argument(
         '--src_path', help='Provide Source Path of the Images', required=True, type=str)
     parser.add_argument(
-        '--weights', default=get_py_path() + 'WI_required/object_weight_file/object_weight.pt', help='Path of the weight file.', type=str)
+        '--weights', default=get_py_path() + 'wi_vision/WI_required/object_weight_file/object_weight.pt', help='Path of the weight file.', type=str)
     parser.add_argument(
-        '--dest_path', default= get_py_path + 'WI_Folder/', help='Provide Destination Path to store the Output of Classificated Images.', type=str)
+        '--dest_path', default= get_py_path() + 'wi_vision/WI_Folder/', help='Provide Destination Path to store the Output of Classificated Images.', type=str)
     parser.add_argument('--save_crops', help = 'To save Crop images from image', default= False, type = bool)
     parser.add_argument('--pet_class', help='To do pet classification', default= False, type = bool)
-    parser.add_argument('--pet_loc', help='Provide path to save Pet Classificated images', default=get_py_path + 'WI_Folder/')
+    parser.add_argument('--pet_loc', help='Provide path to save Pet Classificated images', default=get_py_path() + 'wi_vision/WI_Folder/')
     parser.add_argument('--color_class', help='To do color classification', default= False, type=bool)
+    parser.add_argument('--color_loc', help='Provide path to save Pet Classificated images', default=get_py_path() + 'wi_vision/WI_Folder/')
     parser.add_argument('--save_csv', help='To save data into CSV file', default= True, type = bool)
-    parser.add_argument('--csv_loc', default=get_py_path(), help= 'Provide path to save CSV file to.', type = str)
+    parser.add_argument('--csv_loc', default=get_py_path() + 'wi_vision/WI_Folder/', help= 'Provide path to save CSV file to.', type = str)
     args = parser.parse_args()
 
     try:
@@ -111,20 +113,26 @@ def parse_opt():
                 c_path = dest_path + '/crops/'
             elif dest_path[-1] == '/':
                 c_path = dest_path + '/crops/'
-    
-    
     except Exception as e:
         print(e)
+
+    save_crops = args.save_crops
+    pet_class = args.pet_class
+    pet_loc = args.pet_loc
+    color_class = args.color_class
+    color_loc = args.color_loc
+    save_csv = args.save_csv
+    csv_loc = args.csv_loc
         
-    return [images_, weights, d_path, c_path]
+    return [images_, weights, d_path, c_path, save_crops, pet_class, pet_loc, color_class, color_loc, save_csv, csv_loc]
         
         
 def yolov5_classifier(images_, weights, d_path):
     os.environ['MKL_THREADING_LAYER'] = 'GNU'
     os.system('git clone https://github.com/ultralytics/yolov5')
-    os.system('pip install -r /home/henishv5/WI_Testing/yolov5/requirements.txt')
-    os.system('cd ..')
-    os_run = 'python3 /home/henishv5/WI_Testing/yolov5/detect.py --data /home/henishv5/WI_Testing/yolov5/data/coco128.yaml --source ' + \
+    req_run = 'pip install -r ' + get_py_path() + 'yolov5/requirements.txt'
+    os.system(req_run)
+    os_run = 'python3 ' + get_py_path() + 'yolov5/detect.py --data ' + get_py_path() + 'yolov5/data/coco128.yaml --source ' + \
         str(images_) + ' --weights ' + str(weights) + \
         ' --conf 0.25  --save-txt --nosave --project ' + str(d_path)
     
@@ -191,6 +199,6 @@ def call_pet(src_path):
 
 if __name__ == "__main__":
     os.system('git clone https://github.com/Henishwi/wi_vision')
-    i, w, d, c = parse_opt()
-    yolov5_classifier(i, w, d)
-    image_classification_into_folders(i, d, c)
+    images_, weights, d_path, c_path, save_crops, pet_class, pet_loc, color_class, color_loc, save_csv, csv_loc  = parse_opt()
+    yolov5_classifier(images_, weights, d_path)
+    image_classification_into_folders(images_, d_path, c_path)
