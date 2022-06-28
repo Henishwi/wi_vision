@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
+import csv
 import os
 import shutil
 import argparse
@@ -171,7 +172,7 @@ def image_processing(images_, d_path, c_path, sc, pc, pl, cc, cl, s_csv, cs):
             img_arr.append(i)
         
     for f in img_arr:
-        csv_row = ['', '', -1, '', [-1, -1, -1, -1], -1, '']
+        csv_row = ['', '', -1, ' ', [-1, -1, -1, -1], -1, '']
         x = f.split(".")
         label_path = x[0]+".txt"
         if label_path in label_path_arr:
@@ -211,7 +212,9 @@ def image_processing(images_, d_path, c_path, sc, pc, pl, cc, cl, s_csv, cs):
                         pass
                     
                     if save_csv == True:
-                        pass
+                        with open('countries.csv', 'w', encoding='UTF8', newline='') as f:
+                            writer = csv.writer(f)
+                            writer.writerow(csv_row)
 
 
                 file_.close()
