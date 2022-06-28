@@ -1,5 +1,7 @@
 # importing Libraries
+import csv
 from socket import PACKET_MULTICAST
+from turtle import color
 import pandas as pd
 import numpy as np
 import cv2
@@ -9,8 +11,8 @@ import shutil
 import argparse
 import time
 import multiprocessing
-
 from requests import get
+from torch import true_divide
 # %matplotlib inline
 # importing Dataset from drive
 #from google.colab import drive
@@ -45,6 +47,10 @@ for x in ttv:
   images.sort()
   copy_to_folder(images,dest_path + x)
 """
+
+counter = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+w_class = {0: 'pet_bottles', 1: 'plastic_wrapper', 2: 'ldpe_wrapper', 3: 'hdpe_bottle', 4: 'paper', 5: 'pp', 6: 'aluminium_foil',
+               7: 'multilayer_plastic', 8: 'ps', 9: 'cardboard', 10: 'blister_pack', 11: 'aluminium_can', 12: 'tetrapack'}
 
 
 def is_image(img_):
@@ -138,7 +144,7 @@ def yolov5_classifier(images_, weights, d_path):
     
     os.system(os_run)
 
-def image_classification_into_folders(images_, d_path, c_path):
+def image_processing(images_, d_path, c_path, sc, pc, pl, cc, cl, s_csv, cs):
     src_path = images_  # Source Image Path from where to detect objects
     label_dir = d_path + 'exp/labels/'  # Label Directory Path
     crop_store = c_path  # Save Path
@@ -152,7 +158,6 @@ def image_classification_into_folders(images_, d_path, c_path):
     
     label_path_arr = []
     img_arr = []
-    
     for w_c in w_class.keys():
         if w_class[w_c] not in os.listdir(crop_store):
             os.mkdir(crop_store + w_class[w_c] + '/')
@@ -166,31 +171,49 @@ def image_classification_into_folders(images_, d_path, c_path):
             img_arr.append(i)
         
     for f in img_arr:
+        csv_row = ['', '', -1, '', [-1, -1, -1, -1], -1, '']
         x = f.split(".")
         label_path = x[0]+".txt"
         if label_path in label_path_arr:
             img = cv2.imread(src_path + f)
+            csv_row[0] = src_path + f
             h, w, _ = img.shape
             #img_ = cv2.resize(img, [int(h), int(w/2)])
             with open(label_dir + label_path) as file_:
                 lines = file_.readlines()
                 for line in lines:
                     i, x_cen, y_cen, wi, hi = line.split(' ')
+                    i = int(i)
                     x_cen = int(float(x_cen) * w)
                     y_cen = int(float(y_cen) * h)
                     wi = int(float(wi) * w)
                     hi = int(float(hi) * h)
-                    i = int(i)
-                    roi = img[(y_cen-int(hi/2)+5):(y_cen+int(hi/2)),
-                              (x_cen-int(wi/2)+5):(x_cen+int(wi/2))]
+
                     counter[i] = counter[i] + 1
+                    csv_row[1] = w_class[i]
+                    csv_row[2] = i
+                    csv_row[4][0], csv_row[4][1], csv_row[4][2], csv_row[4][3] = x_cen, y_cen, wi, hi
+                    csv_row[5] = counter[i] 
+                    csv_row[6] = ' '
+                    if sc == True:                  
+                        roi = img[(y_cen-int(hi/2)+5):(y_cen+int(hi/2)),
+                                (x_cen-int(wi/2)+5):(x_cen+int(wi/2))]
+                        cv2.imwrite(
+                            crop_store + w_class[i] + '/' + x[0] + '_' + str(i) + '_' + str(counter[i]) + '.png', roi)
                     
-                    cv2.imwrite(
-                        crop_store + w_class[i] + '/' + x[0] + '_' + str(i) + '_' + str(counter[i]) + '.png', roi)
-                    if i == 0:
-                        pet_call_process = multiprocessing.Process(target=call_pet, args=[str(crop_store + w_class[i] + '/' + x[0] + '_' + str(i) + '_' + str(counter[i]) + '.png')])
-                        pet_call_process.start()
-                        time.sleep(5)
+                    if pc == True:
+                        if i == 0:
+                            pet_call_process = multiprocessing.Process(target=call_pet, args=[str(crop_store + w_class[0] + '/' + x[0] + '_' + str(i) + '_' + str(counter[i]) + '.png')])
+                            pet_call_process.start()
+                            time.sleep(5)
+                    
+                    if cc == True:
+                        pass
+                    
+                    if save_csv == True:
+                        pass
+
+
                 file_.close()
 
 def call_pet(src_path):
@@ -201,4 +224,4 @@ if __name__ == "__main__":
     os.system('git clone https://github.com/Henishwi/wi_vision')
     images_, weights, d_path, c_path, save_crops, pet_class, pet_loc, color_class, color_loc, save_csv, csv_loc  = parse_opt()
     yolov5_classifier(images_, weights, d_path)
-    image_classification_into_folders(images_, d_path, c_path)
+    image_processing(images_, d_path, c_path, save_crops, pet_class, pet_loc, color_class, color_loc, save_csv, csv_loc)
