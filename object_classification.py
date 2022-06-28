@@ -212,7 +212,7 @@ def image_processing(images_, d_path, c_path, sc, pc, pl, cc, cl, s_csv, cs):
                         pass
                     
                     if save_csv == True:
-                        with open('countries.csv', 'w', encoding='UTF8', newline='') as f:
+                        with open(get_py_path() + 'waste_data.csv', 'a+', encoding='UTF8', newline='') as f:
                             writer = csv.writer(f)
                             writer.writerow(csv_row)
 
