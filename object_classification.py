@@ -8,11 +8,9 @@ import shutil
 import argparse
 import time
 import multiprocessing
+
+from requests import get
 # %matplotlib inline
-os.environ['MKL_THREADING_LAYER'] = 'GNU'
-os.system('git clone https://github.com/ultralytics/yolov5')
-os.system('pip install -r /home/henishv5/WI_Testing/yolov5/requirements.txt')
-os.system('cd ..')
 # importing Dataset from drive
 #from google.colab import drive
 # drive.mount('/content/drive')
@@ -47,8 +45,6 @@ for x in ttv:
   copy_to_folder(images,dest_path + x)
 """
 
-#!git clone https://github.com/ultralytics/yolov5
-
 
 def is_image(img_):
     if img_.split('.')[-1] in ['png', 'jpg', 'jpeg', 'raw']:
@@ -56,16 +52,25 @@ def is_image(img_):
     else:
         return False
 
+def get_py_path():
+    return str(os.getcwd()) + '/'
+
 def parse_opt():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--src_path', help='Provide Source Path of the Images', required=True, type=str)
     parser.add_argument(
-        '--weights', default='/home/henishv5/WI_Testing/yolov5s_v1/40_ep/weights/best.pt', type=str)
+        '--weights', default=get_py_path() + 'WI_required/object_weight_file/object_weight.pt', help='Path of the weight file.', type=str)
     parser.add_argument(
-        '--dest_path', help='Provide Destination Path to store the Output of Classificated Images.', required=True, type=str)
+        '--dest_path', default= get_py_path + 'WI_Folder/', help='Provide Destination Path to store the Output of Classificated Images.', type=str)
+    parser.add_argument('--save_crops', help = 'To save Crop images from image', default= False, type = bool)
+    parser.add_argument('--pet_class', help='To do pet classification', default= False, type = bool)
+    parser.add_argument('--pet_loc', help='Provide path to save Pet Classificated images', default=get_py_path + 'WI_Folder/')
+    parser.add_argument('--color_class', help='To do color classification', default= False, type=bool)
+    parser.add_argument('--save_csv', help='To save data into CSV file', default= True, type = bool)
+    parser.add_argument('--csv_loc', default=get_py_path(), help= 'Provide path to save CSV file to.', type = str)
     args = parser.parse_args()
-    
+
     try:
         if os.path.isdir(args.src_path):
             images_ = args.src_path
@@ -79,7 +84,7 @@ def parse_opt():
         print(e)
     
     try:
-        if args.weights.split('.')[-1] in ['pt', 'pb', 'onnx', 'torchscript', 'xml', 'engine', 'mlmodel', 'tflite']:
+        if args.weights.split('.')[-1] in ['pt', 'pb', 'onnx', 'torchscript', 'xml', 'engine', 'mlmodel', 'tflite', 'hdf5']:
             weights = args.weights
         else:
             raise Exception('The provided file is not a weight file.')
@@ -88,37 +93,24 @@ def parse_opt():
     
     try:
         dest_path = args.dest_path
-        if 'data_temp' not in os.listdir(dest_path):
+        
+        if dest_path[-1] != '/':
+            d_path = dest_path + '/'
+        elif dest_path[-1] == '/':
+                d_path = dest_path
+        
+        if 'crops' not in os.listdir(dest_path):
             if dest_path[-1] != '/':
-                os.mkdir(dest_path + '/data_temp/')
-                d_path = dest_path + '/data_temp/'
+                os.mkdir(dest_path + '/crops/')
+                c_path = dest_path + '/crops/'
             elif dest_path[-1] == '/':
-                os.mkdir(dest_path + 'data_temp/')
-                d_path = dest_path + 'data_temp/'
-    
+                os.mkdir(dest_path + 'crops/')
+                c_path = dest_path + 'crops/'
         else:
             if dest_path[-1] != '/':
-                d_path = dest_path + '/data_temp/'
+                c_path = dest_path + '/crops/'
             elif dest_path[-1] == '/':
-                d_path = dest_path + 'data_temp/'
-    
-        if'data_final' not in os.listdir(dest_path):
-            if dest_path[-1] != '/':
-                os.mkdir(dest_path + '/data_final/')
-            elif dest_path[-1] == '/':
-                os.mkdir(dest_path + 'data_final/')
-        if 'crops' not in os.listdir(dest_path + '/data_final/'):
-            if dest_path[-1] != '/':
-                os.mkdir(dest_path + '/data_final/crops/')
-                c_path = dest_path + '/data_final/crops/'
-            elif dest_path[-1] == '/':
-                os.mkdir(dest_path + '/data_final/crops/')
-                c_path = dest_path + '/data_final/crops/'
-        else:
-            if dest_path[-1] != '/':
-                c_path = dest_path + '/data_final/crops/'
-            elif dest_path[-1] == '/':
-                c_path = dest_path + 'data_final/crops/'
+                c_path = dest_path + '/crops/'
     
     
     except Exception as e:
@@ -128,6 +120,10 @@ def parse_opt():
         
         
 def yolov5_classifier(images_, weights, d_path):
+    os.environ['MKL_THREADING_LAYER'] = 'GNU'
+    os.system('git clone https://github.com/ultralytics/yolov5')
+    os.system('pip install -r /home/henishv5/WI_Testing/yolov5/requirements.txt')
+    os.system('cd ..')
     os_run = 'python3 /home/henishv5/WI_Testing/yolov5/detect.py --data /home/henishv5/WI_Testing/yolov5/data/coco128.yaml --source ' + \
         str(images_) + ' --weights ' + str(weights) + \
         ' --conf 0.25  --save-txt --nosave --project ' + str(d_path)
@@ -192,8 +188,9 @@ def image_classification_into_folders(images_, d_path, c_path):
 def call_pet(src_path):
     os_pet_command = 'python3 pet_classification.py --src_path ' + src_path
     os.system(os_pet_command)
-                
+
 if __name__ == "__main__":
+    os.system('git clone https://github.com/Henishwi/wi_vision')
     i, w, d, c = parse_opt()
     yolov5_classifier(i, w, d)
     image_classification_into_folders(i, d, c)
