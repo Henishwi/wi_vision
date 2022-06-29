@@ -141,7 +141,7 @@ def yolov5_classifier(images_, weights, d_path):
     os.system(req_run)
     os_run = 'python3 ' + get_py_path() + 'yolov5/detect.py --data ' + get_py_path() + 'yolov5/data/coco128.yaml --source ' + \
         str(images_) + ' --weights ' + str(weights) + \
-        ' --conf 0.25  --save-txt --nosave --project ' + str(d_path)
+        ' --conf 0.25  --save-txt --nosave --project ' + str(d_path) + ' --name exp'
     
     os.system(os_run)
 
@@ -196,20 +196,32 @@ def image_processing(images_, d_path, c_path, sc, pc, pl, cc, cl, s_csv, cs):
                     csv_row[4][0], csv_row[4][1], csv_row[4][2], csv_row[4][3] = x_cen, y_cen, wi, hi
                     csv_row[5] = counter[i] 
                     csv_row[6] = ' '
-                    if sc == True:                  
-                        roi = img[(y_cen-int(hi/2)+5):(y_cen+int(hi/2)),
-                                (x_cen-int(wi/2)+5):(x_cen+int(wi/2))]
+                    
+                    roi = img[(y_cen-int(hi/2)+5):(y_cen+int(hi/2)), (x_cen-int(wi/2)+5):(x_cen+int(wi/2))]
+
+                    if cc == True:
+                        pass
+
+                    if sc == True:                 
                         cv2.imwrite(
                             crop_store + w_class[i] + '/' + x[0] + '_' + str(i) + '_' + str(counter[i]) + '.png', roi)
+                    else:
+                        if i == 0:
+                            cv2.imwrite(crop_store + w_class[i] + '/' + x[0] + '_' + str(i) + '_' + str(counter[i]) + '.png', roi)
+                            for w_c in w_class.keys()[1:]:
+                                if w_class[w_c] not in os.listdir(crop_store):
+                                    if len(os.listdir(crop_store + w_class[w_c] + '/')) == 0:
+                                        os.rmdir(crop_store + w_class[w_c] + '/')
                     
+
+
                     if pc == True:
                         if i == 0:
-                            pet_call_process = multiprocessing.Process(target=call_pet, args=[str(crop_store + w_class[0] + '/' + x[0] + '_' + str(i) + '_' + str(counter[i]) + '.png')])
+                            pet_call_process = multiprocessing.Process(target=call_pet, args=[str(crop_store + w_class[0] + '/' + x[0] + '_' + str(i) + '_' + str(counter[i]) + '.png'), pl])
                             pet_call_process.start()
                             time.sleep(5)
                     
-                    if cc == True:
-                        pass
+                    
                     
                     if save_csv == True:
                         with open(get_py_path() + 'waste_data.csv', 'a+', encoding='UTF8', newline='') as f:
@@ -219,8 +231,12 @@ def image_processing(images_, d_path, c_path, sc, pc, pl, cc, cl, s_csv, cs):
 
                 file_.close()
 
-def call_pet(src_path):
-    os_pet_command = 'python3 pet_classification.py --src_path ' + src_path
+def call_color(src_path, dest_path, sc):
+    os_pet_command = 'python3 color_classification.py --src_path ' + src_path + ' --dest_path ' + dest_path + ' --crop_saved ' + sc
+    os.system(os_pet_command)
+
+def call_pet(src_path, dest_path, sc):
+    os_pet_command = 'python3 pet_classification.py --src_path ' + src_path + ' --dest_path ' + dest_path + ' --crop_saved ' + sc
     os.system(os_pet_command)
 
 if __name__ == "__main__":
