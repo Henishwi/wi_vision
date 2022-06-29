@@ -277,7 +277,9 @@ if __name__ == "__main__":
     parser.add_argument('--crop_save', help='True if crops are already saved.', required= True, default= False, type=bool)
     args = parser.parse_args()
     src_path = str(args.src_path)
+    print(src_path)
     dest_path = args.dest_path
+    print(dest_path)
     if os.path.isdir(src_path):
         for f in os.listdir(src_path):
             if is_image(f):
