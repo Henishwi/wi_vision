@@ -238,7 +238,7 @@ def predict_class(dest_path, image_, cs):
     img_array = tf.expand_dims(img_array, 0) # Create a batch
             
     model = load_model(
-        get_py_path() + 'wi_vision/WI_required/pet_model')
+        get_py_path() + 'WI_required/pet_model')
     predictions = model.predict(img_array, verbose = 0)
     if predictions[0][0] == 1:
         x = pet_classes[0]
@@ -246,13 +246,14 @@ def predict_class(dest_path, image_, cs):
         x = pet_classes[1]
     if cs == 'False':
         print(x)
+        os.remove(image_)
         """
         temp = cv2.imread(image_)
         cv2.imshow(x, temp)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-        os.remove(image_)
-"""
+        """
+        
     elif cs == 'True':
         if 'crushed' not in os.listdir(dest_path):
             os.mkdir(dest_path+'/crushed')
@@ -267,10 +268,7 @@ if __name__ == "__main__":
     parser.add_argument('--crop_save', help='True if crops are already saved.', default= 'False', type=str)
     args = parser.parse_args()
     src_path = str(args.src_path)
-    print(src_path)
     dest_path = args.dest_path
-    print(dest_path)
-    print(args.crop_save)
     if os.path.isdir(src_path):
         for f in os.listdir(src_path):
             if is_image(f):
