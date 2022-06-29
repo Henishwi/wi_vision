@@ -272,20 +272,20 @@ def predict_class(dest_path, image_, cs):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--src_path', help='Provide image path here to classify the image', required = True, type=str)
-    parser.add_argument('--dest_path', help='Provide path to store images into crushed uncrushed folders', required = True, type= str)
+    parser.add_argument('--src_path', help='Provide image path here to classify the image', required = True)
+    parser.add_argument('--dest_path', help='Provide path to store images into crushed uncrushed folders', required = True)
     parser.add_argument('--crop_save', help='True if crops are already saved.', required= True, default= False, type=bool)
     args = parser.parse_args()
-    src_path = args.src_path
+    src_path = str(args.src_path)
+    dest_path = args.dest_path
     if os.path.isdir(src_path):
         for f in os.listdir(src_path):
             if is_image(f):
-                predict_class(src_path, src_path+f, args.crop_save)
+                predict_class(dest_path, src_path+f, args.crop_save)
             else:
                 pass
     elif is_image(src_path):
-        p = Path(src_path)
-        predict_class(str(p.parent) + '/', src_path, args.crop_save)
+        predict_class(dest_path, src_path, args.crop_save)
         # predict_class(src_path)
     # predict_class('/home/henishv5/WI_Testing/test/data_final/crops/pet_bottles/frame_3202_0_1023.png')
     # predict_class('/home/henishv5/WI_Testing/pet_images_new/uncrushed/image_477.png')
