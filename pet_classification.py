@@ -43,10 +43,10 @@ os.mkdir('/home/henishv5/WI_Testing/test_pet/test/uncrushed/')
 os.mkdir('/home/henishv5/WI_Testing/test_pet/train/uncrushed/')
 os.mkdir('/home/henishv5/WI_Testing/test_pet/val/uncrushed/')
 """
-
+pet_classes = ['crushed', 'uncrushed']
 
 def is_image(img_):
-    if img_.split('.')[-1] in ['png', 'jpg', 'jpeg', 'raw']:
+    if str(img_).split('.')[-1] in ['png', 'jpg', 'jpeg', 'raw']:
         return True
     else:
         return False
@@ -64,6 +64,9 @@ def move_to_folder(file_, dest_path):
         shutil.move(file_, dest_path)
     except Exception as e:
         print(e)
+
+def get_py_path():
+    return str(os.getcwd()) + '/'
 
 def train_pet_classifier():
     for p_c in pet_classes:
@@ -230,56 +233,44 @@ def train_pet_classifier():
 
 
 def predict_class(dest_path, image_, cs):
-    
-    if cs == False:
-        img = tf.keras.utils.load_img(image_, target_size=(56, 56))
-        img_array = tf.keras.utils.img_to_array(img)
-        img_array = tf.expand_dims(img_array, 0) # Create a batch
+    img = tf.keras.utils.load_img(image_, target_size=(56, 56))
+    img_array = tf.keras.utils.img_to_array(img)
+    img_array = tf.expand_dims(img_array, 0) # Create a batch
             
-        model = load_model(
-            '/home/henishv5/WI_Testing/pet_models_v3/ep_100')
-        predictions = model.predict(img_array, verbose = 0)
-        if predictions[0][0] == 1:
-            x = 'crushed'
-        else:
-            x = 'uncrushed'
-        #cv2.imread(image_)
-        cv2.imshow(x, img)
+    model = load_model(
+        get_py_path() + 'wi_vision/WI_required/pet_model')
+    predictions = model.predict(img_array, verbose = 0)
+    if predictions[0][0] == 1:
+        x = pet_classes[0]
+    else:
+        x = pet_classes[1]
+    if cs == 'False':
+        print(x)
+        """
+        temp = cv2.imread(image_)
+        cv2.imshow(x, temp)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-
-    if cs ==True:
+        os.remove(image_)
+"""
+    elif cs == 'True':
         if 'crushed' not in os.listdir(dest_path):
             os.mkdir(dest_path+'/crushed')
         if 'uncrushed' not in os.listdir(dest_path):
             os.mkdir(dest_path+'/uncrushed')
-        
-        img = tf.keras.utils.load_img(image_, target_size=(56, 56))
-        img_array = tf.keras.utils.img_to_array(img)
-        img_array = tf.expand_dims(img_array, 0) # Create a batch
-
-            
-        model = load_model(
-            '/home/henishv5/WI_Testing/pet_models_v3/ep_100')
-        predictions = model.predict(img_array, verbose = 0)
-        if predictions[0][0] == 1:
-            x = 'crushed'
-        else:
-            x = 'uncrushed'
-        
-        copy_to_folder(image_, dest_path + x)
-
+        copy_to_folder([image_], dest_path + x)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--src_path', help='Provide image path here to classify the image', required = True)
     parser.add_argument('--dest_path', help='Provide path to store images into crushed uncrushed folders', required = True)
-    parser.add_argument('--crop_save', help='True if crops are already saved.', required= True, default= False, type=bool)
+    parser.add_argument('--crop_save', help='True if crops are already saved.', default= 'False', type=str)
     args = parser.parse_args()
     src_path = str(args.src_path)
     print(src_path)
     dest_path = args.dest_path
     print(dest_path)
+    print(args.crop_save)
     if os.path.isdir(src_path):
         for f in os.listdir(src_path):
             if is_image(f):
