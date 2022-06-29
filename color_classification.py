@@ -362,7 +362,7 @@ def predict_class(dest_path, image_, cs):
     img_array = tf.keras.utils.img_to_array(img)
     img_array = tf.expand_dims(img_array, 0) # Create a batch
     model = load_model(
-        get_py_path() + 'WI_required/color_model')
+        get_py_path() + 'wi_vision/WI_required/color_model')
     predictions = model.predict(img_array, verbose = 0)
     predicted_class_indices=int(np.argmax(predictions,axis=1))
     x = color_cls[predicted_class_indices]

@@ -68,16 +68,16 @@ def parse_opt():
     parser.add_argument(
         '--src_path', help='Provide Source Path of the Images', required=True, type=str)
     parser.add_argument(
-        '--weights', default=get_py_path() + 'WI_required/object_weight_file/object_weight.pt', help='Path of the weight file.', type=str)
+        '--weights', default=get_py_path() + 'wi_vision/WI_required/object_weight_file/object_weight.pt', help='Path of the weight file.', type=str)
     parser.add_argument(
         '--dest_path', default= get_py_path() + 'wi_vision/WI_Folder/', help='Provide Destination Path to store the Output of Classificated Images.', type=str)
     parser.add_argument('--save_crops', help = 'To save Crop images from image', default= False, type = bool)
     parser.add_argument('--pet_class', help='To do pet classification', default= False, type = bool)
-    parser.add_argument('--pet_loc', help='Provide path to save Pet Classificated images', default=get_py_path() + 'WI_Folder/')
+    parser.add_argument('--pet_loc', help='Provide path to save Pet Classificated images', default=get_py_path() + 'wi_vision/WI_Folder/')
     parser.add_argument('--color_class', help='To do color classification', default= False, type=bool)
-    parser.add_argument('--color_loc', help='Provide path to save Pet Classificated images', default=get_py_path() + 'WI_Folder/')
+    parser.add_argument('--color_loc', help='Provide path to save Pet Classificated images', default=get_py_path() + 'wi_vision/WI_Folder/')
     parser.add_argument('--save_csv', help='To save data into CSV file', default= True, type = bool)
-    parser.add_argument('--csv_loc', default=get_py_path() + 'WI_Folder/', help= 'Provide path to save CSV file to.', type = str)
+    parser.add_argument('--csv_loc', default=get_py_path() + 'wi_vision/WI_Folder/', help= 'Provide path to save CSV file to.', type = str)
     args = parser.parse_args()
 
     try:
@@ -243,8 +243,7 @@ def call_pet(src_path, dest_path, sc):
     os.system(os_pet_command)
 
 if __name__ == "__main__":
-    os.system('git clone https://github.com/Henishwi/wi_vision/WI_Folder')
-    os.system('git clone https://github.com/Henishwi/wi_vision/WI_required')
+    os.system('git clone https://github.com/Henishwi/wi_vision')
     images_, weights, d_path, c_path, save_crops, pet_class, pet_loc, color_class, color_loc, save_csv, csv_loc  = parse_opt()
     yolov5_classifier(images_, weights, d_path)
     if 'yolov5' in os.listdir(get_py_path()):

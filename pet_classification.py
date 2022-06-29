@@ -238,7 +238,7 @@ def predict_class(dest_path, image_, cs):
     img_array = tf.expand_dims(img_array, 0) # Create a batch
             
     model = load_model(
-        get_py_path() + 'WI_required/pet_model')
+        get_py_path() + 'wi_vision/WI_required/pet_model')
     predictions = model.predict(img_array, verbose = 0)
     if predictions[0][0] == 1:
         x = pet_classes[0]
