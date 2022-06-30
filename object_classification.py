@@ -3,7 +3,6 @@ from concurrent.futures import process
 import csv
 from email import parser
 from socket import PACKET_MULTICAST
-from turtle import color
 import pandas as pd
 import numpy as np
 import cv2
