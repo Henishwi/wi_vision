@@ -1,5 +1,7 @@
 # importing Libraries
+from concurrent.futures import process
 import csv
+from email import parser
 from socket import PACKET_MULTICAST
 from turtle import color
 import pandas as pd
@@ -9,6 +11,14 @@ import matplotlib.pyplot as plt
 import csv
 import os
 import shutil
+import argparse
+
+from traitlets import default
+import bagpy
+from bagpy import bagreader
+import rosbag
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
 import argparse
 import time
 import multiprocessing
@@ -60,8 +70,37 @@ def is_image(img_):
     else:
         return False
 
+def is_bag_file(bag_path):
+    if bag_path.split('.')[-1] == 'bag':
+        print(True)
+        return True
+    else:
+        print(False)
+        return False
+
 def get_py_path():
     return str(os.getcwd()) + '/'
+
+
+def process_bagfiles(bag_path, topic_name):
+    output_dir = get_py_path() + 'wi_vision/WI_Folder/Bag_Images/'
+    bag_file = bag_path
+    image_topic = topic_name
+    bag = rosbag.Bag(bag_file, "r")
+    bridge = CvBridge()
+    
+    if 'Bag_Images' not in os.listdir(get_py_path() + 'wi_vision/WI_Folder/'):
+            os.mkdir(output_dir)
+    count = len(os.listdir(output_dir)) + 1
+    for topic, msg, t in bag.read_messages(topics=[image_topic]):
+        cv_img = bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")    
+        cv2.imwrite(os.path.join(output_dir, "frame_" + str(count) + ".png"), cv_img)
+        count += 1
+    
+    return output_dir
+
+    
+    
 
 def parse_opt():
     parser = argparse.ArgumentParser()
@@ -72,6 +111,7 @@ def parse_opt():
     parser.add_argument(
         '--dest_path', default= get_py_path() + 'wi_vision/WI_Folder/', help='Provide Destination Path to store the Output of Classificated Images.', type=str)
     parser.add_argument('--save_crops', help = 'To save Crop images from image', default= False, type = bool)
+    parser.add_argument('--topic_name', default = '/pylon_camera_node/image_rect_color')
     parser.add_argument('--pet_class', help='To do pet classification', default= False, type = bool)
     parser.add_argument('--pet_loc', help='Provide path to save Pet Classificated images', default=get_py_path() + 'wi_vision/WI_Folder/')
     parser.add_argument('--color_class', help='To do color classification', default= False, type=bool)
@@ -80,11 +120,17 @@ def parse_opt():
     parser.add_argument('--csv_loc', default=get_py_path() + 'wi_vision/WI_Folder/', help= 'Provide path to save CSV file to.', type = str)
     args = parser.parse_args()
 
+    
+
     try:
         if os.path.isdir(args.src_path):
             images_ = args.src_path
         elif is_image(args.src_path):
             images_ = args.src_path
+        elif is_bag_file(args.src_path):
+            print("Process BagFile")
+            images_ = process_bagfiles(args.src_path, args.topic_name)
+            print(images_)
         else:
             raise Exception('Provide path is neither an image nor a Directory that has images of format JPG PNG JPEG RAW. ARGUMENT only accepts this format files or directory that has this type of files')
         print(images_)
