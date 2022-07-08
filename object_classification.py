@@ -3,6 +3,7 @@ from concurrent.futures import process
 import csv
 from email import parser
 from socket import PACKET_MULTICAST
+from matplotlib import image
 import pandas as pd
 import numpy as np
 import cv2
@@ -11,18 +12,13 @@ import csv
 import os
 import shutil
 import argparse
-
-from traitlets import default
-import bagpy
-from bagpy import bagreader
+import rospy
 import rosbag
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 import argparse
 import time
 import multiprocessing
-from requests import get
-from torch import true_divide
 # %matplotlib inline
 # importing Dataset from drive
 #from google.colab import drive
@@ -81,20 +77,22 @@ def get_py_path():
     return str(os.getcwd()) + '/'
 
 
+
 def process_bagfiles(bag_path, topic_name):
     output_dir = get_py_path() + 'wi_vision/WI_Folder/Bag_Images/'
     bag_file = bag_path
     image_topic = topic_name
-    bag = rosbag.Bag(bag_file, "r")
-    bridge = CvBridge()
-    
     if 'Bag_Images' not in os.listdir(get_py_path() + 'wi_vision/WI_Folder/'):
             os.mkdir(output_dir)
     count = len(os.listdir(output_dir)) + 1
+    
+    bag = rosbag.Bag(bag_file, "r")
+    bridge = CvBridge()
     for topic, msg, t in bag.read_messages(topics=[image_topic]):
-        cv_img = bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")    
-        cv2.imwrite(os.path.join(output_dir, "frame_" + str(count) + ".png"), cv_img)
+        cv_img = bridge.imgmsg_to_cv2(msg , desired_encoding="bgr8")    
+        cv2.imwrite(os.path.join(output_dir, "frame_" + str(count) + ".jpg"), cv_img)
         count += 1
+    
     
     return output_dir
 
@@ -186,7 +184,7 @@ def yolov5_classifier(images_, weights, d_path):
     os.system(req_run)
     os_run = 'python3 ' + get_py_path() + 'yolov5/detect.py --data ' + get_py_path() + 'yolov5/data/coco128.yaml --source ' + \
         str(images_) + ' --weights ' + str(weights) + \
-        ' --conf 0.25  --save-txt --nosave --project ' + str(d_path) + ' --name exp'
+        ' --conf 0.25  --save-txt --nosave --project ' + str(d_path) + ' --name exp --exist-ok'
     
     os.system(os_run)
 
@@ -198,14 +196,16 @@ def image_processing(images_, d_path, c_path, sc, pc, pl, cc, cl, s_csv, cs):
     
     counter = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     
-    w_class = {0: 'pet_bottles', 1: 'plastic_wrapper', 2: 'ldpe_wrapper', 3: 'hdpe_bottle', 4: 'paper', 5: 'pp', 6: 'aluminium_foil',
-               7: 'multilayer_plastic', 8: 'ps', 9: 'cardboard', 10: 'blister_pack', 11: 'aluminium_can', 12: 'tetrapack'}
+    w_class = {0: 'pet', 1: 'ldpe_wrapper', 2: 'hdpe', 3: 'paper', 4: 'pp', 5: 'aluminium_foil',
+               6: 'multilayer_plastic', 7: 'cardboard', 8: 'aluminium_can', 9: 'tetrapack'}
     
     label_path_arr = []
     img_arr = []
     for w_c in w_class.keys():
         if w_class[w_c] not in os.listdir(crop_store):
             os.mkdir(crop_store + w_class[w_c] + '/')
+        else:
+            counter[w_c] = len(os.listdir(crop_store + w_class[w_c] + '/'))
     
     for t in os.listdir(label_dir):
         label_path_arr.append(t)
@@ -219,11 +219,12 @@ def image_processing(images_, d_path, c_path, sc, pc, pl, cc, cl, s_csv, cs):
         csv_row = ['', '', -1, ' ', [-1, -1, -1, -1], -1, '']
         x = f.split(".")
         label_path = x[0]+".txt"
+        i, x_cen, y_cen, wi, hi = 0,0,0,0,0
+        img = cv2.imread(src_path + f)
         if label_path in label_path_arr:
-            img = cv2.imread(src_path + f)
             csv_row[0] = src_path + f
             h, w, _ = img.shape
-            #img_ = cv2.resize(img, [int(h), int(w/2)])
+            img_ = cv2.resize(img, [int(h), int(w/2)])
             with open(label_dir + label_path) as file_:
                 lines = file_.readlines()
                 for line in lines:
@@ -242,19 +243,24 @@ def image_processing(images_, d_path, c_path, sc, pc, pl, cc, cl, s_csv, cs):
                     csv_row[6] = ' '
                     
                     roi = img[(y_cen-int(hi/2)+5):(y_cen+int(hi/2)), (x_cen-int(wi/2)+5):(x_cen+int(wi/2))]
+                    #img_copy = img.copy()
+                    #cv_img = cv2.rectangle(img_copy, ((x_cen+int(wi/2)),(y_cen+int(hi/2))), ((x_cen-int(wi/2)+5), (y_cen-int(hi/2)+5)), color = (0,255,0))
+                    #cv2.imshow('Image', cv_img)
+                    #if cv2.waitKey(1) == ord('q'):
+                    #    break
 
                     if sc == True:                 
                         cv2.imwrite(
-                            crop_store + w_class[i] + '/' + x[0] + '_' + str(i) + '_' + str(counter[i]) + '.png', roi)
+                            crop_store + w_class[i] + '/' + x[0] + '_' + str(i) + '_' + str(counter[i]) + '.jpg', roi)
                         if cc == True:
                             time.sleep(10)
-                            color_call_process = multiprocessing.Process(target=call_color, args=[str(crop_store + w_class[i] + '/'+ x[0] + '_' + str(i) + '_' + str(counter[i]) + '.png'), cl, sc])
+                            color_call_process = multiprocessing.Process(target=call_color, args=[str(crop_store + w_class[i] + '/'+ x[0] + '_' + str(i) + '_' + str(counter[i]) + '.jpg'), cl, sc])
                             color_call_process.start()
                             
 
                     else:
                         if i == 0:
-                            cv2.imwrite(crop_store + w_class[i] + '/' + x[0] + '_' + str(i) + '_' + str(counter[i]) + '.png', roi)
+                            cv2.imwrite(crop_store + w_class[i] + '/' + x[0] + '_' + str(i) + '_' + str(counter[i]) + '.jpg', roi)
                             for w_c in w_class.keys():
                                 if w_class[w_c] in os.listdir(crop_store):
                                     if len(os.listdir(crop_store + w_class[w_c] + '/')) == 0 and w_c!=0:
@@ -273,9 +279,27 @@ def image_processing(images_, d_path, c_path, sc, pc, pl, cc, cl, s_csv, cs):
                         with open(get_py_path() + 'waste_data.csv', 'a+', encoding='UTF8', newline='') as f:
                             writer = csv.writer(f)
                             writer.writerow(csv_row)
+            file_.close()
+        """if wi == 0 and hi == 0:
+            cv2.imshow("Image", img)
+            if cv2.waitKey(1) == ord('q'):
+                break
+        else:
+            x_cen = int(float(x_cen) * w)
+            y_cen = int(float(y_cen) * h)
+            wi = int(float(wi) * w)
+            hi = int(float(hi) * h)
+            img_copy = img.copy()
+            cv_img = cv2.rectangle(img_copy, ((x_cen+int(wi/2)),(y_cen+int(hi/2))), ((x_cen-int(wi/2)+5), (y_cen-int(hi/2)+5)), color = (0,255,0), thickness=2)
+            cv2.imshow('Image', cv_img)
+            if cv2.waitKey(1) == ord('q'):
+                break"""
+        
+        #time.sleep(0.3)
 
+    #cv2.destroyAllWindows()
 
-                file_.close()
+                
 
     
 
