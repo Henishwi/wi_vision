@@ -16,3 +16,5 @@ wi_required/
 *.data-00000-of-00001
 WI_required/color_model/saved_model.pb
 WI_required/pet_model/saved_model.pb
+*.pb
+*.pb
