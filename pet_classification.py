@@ -1,72 +1,19 @@
-from ast import arg
+from common import *
 from importlib.resources import path
-from pathlib import Path
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
 import os
+import time
 #from colorthief import ColorThief
-import csv
-import cv2
 from yaml import parse
 from sklearn.model_selection import train_test_split
-from PIL import Image
 import tensorflow as tf
 from tensorflow import keras
-import shutil
 import argparse
 from keras.models import load_model
-from tensorflow.keras.models import Sequential, Model
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dropout, Flatten, Dense, Input, BatchNormalization, Lambda, AveragePooling2D, ZeroPadding2D, Reshape, Activation, Add, GlobalAveragePooling2D
-from tensorflow.keras.layers import Concatenate
-from tensorflow.keras.optimizers import SGD
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dense, BatchNormalization, Activation, Add, GlobalAveragePooling2D
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.preprocessing import image
-# Display
-from IPython.display import Image, display
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
 
-
-#pet_classes = os.listdir('/home/henishv5/WI_Testing/pet_images_new/')
-"""
-os.mkdir('/home/henishv5/WI_Testing/test_pet/')
-
-os.mkdir('/home/henishv5/WI_Testing/test_pet/test/')
-os.mkdir('/home/henishv5/WI_Testing/test_pet/train/')
-os.mkdir('/home/henishv5/WI_Testing/test_pet/val/')
-os.mkdir('/home/henishv5/WI_Testing/test_pet/test/crushed/')
-os.mkdir('/home/henishv5/WI_Testing/test_pet/train/crushed/')
-os.mkdir('/home/henishv5/WI_Testing/test_pet/val/crushed/')
-os.mkdir('/home/henishv5/WI_Testing/test_pet/test/uncrushed/')
-os.mkdir('/home/henishv5/WI_Testing/test_pet/train/uncrushed/')
-os.mkdir('/home/henishv5/WI_Testing/test_pet/val/uncrushed/')
-"""
 pet_classes = ['crushed', 'uncrushed']
-
-def is_image(img_):
-    if str(img_).split('.')[-1] in ['png', 'jpg', 'jpeg', 'raw']:
-        return True
-    else:
-        return False
-
-
-def copy_to_folder(list_of_files, dest_path):
-    for f in list_of_files:
-        try:
-            shutil.copy(f, dest_path)
-        except Exception as e:
-            print(e)
-
-def move_to_folder(file_, dest_path):
-    try:
-        shutil.move(file_, dest_path)
-    except Exception as e:
-        print(e)
-
-def get_py_path():
-    return str(os.getcwd()) + '/'
 
 def train_pet_classifier():
     for p_c in pet_classes:
@@ -238,22 +185,20 @@ def predict_class(dest_path, image_, cs):
     img_array = tf.expand_dims(img_array, 0) # Create a batch
             
     model = load_model(
-        get_py_path() + 'wi_vision/WI_required/pet_model')
+        get_py_path() + 'wi_required/pet_model/')
     predictions = model.predict(img_array, verbose = 0)
     if predictions[0][0] == 1:
         x = pet_classes[0]
     else:
         x = pet_classes[1]
+    print(x)
+    """ temp = cv2.imread(image_)
+    cv2.imshow(x, temp)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()"""
     if cs == 'False':
         print(x)
         os.remove(image_)
-        """
-        temp = cv2.imread(image_)
-        cv2.imshow(x, temp)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-        """
-        
     elif cs == 'True':
         if 'crushed' not in os.listdir(dest_path):
             os.mkdir(dest_path+'/crushed')
@@ -277,7 +222,4 @@ if __name__ == "__main__":
                 pass
     elif is_image(src_path):
         predict_class(dest_path, src_path, args.crop_save)
-        # predict_class(src_path)
-    # predict_class('/home/henishv5/WI_Testing/test/data_final/crops/pet_bottles/frame_3202_0_1023.png')
-    # predict_class('/home/henishv5/WI_Testing/pet_images_new/uncrushed/image_477.png')
     #train_pet_classifier()
