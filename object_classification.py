@@ -186,7 +186,7 @@ def image_processing(images_, d_path, c_path, sc, pc, pl, cc, cl, s_csv, cs):
                                 writer = csv.writer(f)
                                 writer.writerow(str(csv_row))
                         except Exception as e:
-                            print("s_csv + ".format(e))
+                            print("s_csv + {}".format(e))
             file_.close()               
 
     

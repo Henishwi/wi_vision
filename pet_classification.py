@@ -1,9 +1,11 @@
 from common import *
 from importlib.resources import path
 import os
+import onnx
 import time
 #from colorthief import ColorThief
 from yaml import parse
+import onnxruntime as ort
 from sklearn.model_selection import train_test_split
 import tensorflow as tf
 from tensorflow import keras
@@ -184,10 +186,14 @@ def predict_class(dest_path, image_, cs):
     img_array = tf.keras.utils.img_to_array(img)
     img_array = tf.expand_dims(img_array, 0) # Create a batch
             
-    model = load_model(
-        get_py_path() + 'wi_required/pet_model/')
+    model = onnx.load('/home/henishv5/Downloads/vgg19.onnx')
+        #get_py_path() + 'wi_required/pet_model/')
+    sess = ort.InferenceSession("onnx_model.onnx")
+    input_name = sess.get_inputs()[0].name
+    label_name = sess.get_outputs()[0].name
+    pred = sess.run([label_name], {img_array})[0]
     predictions = model.predict(img_array, verbose = 0)
-    if predictions[0][0] == 1:
+    if pred[0][0] == 1:
         x = pet_classes[0]
     else:
         x = pet_classes[1]

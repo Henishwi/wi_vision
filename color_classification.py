@@ -1,25 +1,21 @@
 #Importing Libraries
 
 from copy import copy
-from matplotlib import image
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
-import csv
-from sklearn.model_selection import train_test_split
-from PIL import Image
 import tensorflow as tf
 from tensorflow import keras
 import shutil
+from common import *
 import argparse
-import cv2
 from keras.models import load_model
-from tensorflow.keras.models import Sequential, Model
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dropout, Flatten, Dense, Input, BatchNormalization, Lambda, AveragePooling2D, ZeroPadding2D, Reshape, Activation, Concatenate
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dropout, Flatten, Dense, Input, BatchNormalization, Lambda, Concatenate
 from tensorflow.keras.optimizers import SGD
 from tensorflow.keras.callbacks import ModelCheckpoint
-from tensorflow.keras.preprocessing.image import ImageDataGenerator, load_img
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 from IPython.display import Image, display
 import matplotlib.cm as cm
@@ -30,62 +26,16 @@ def is_image(file_format):
   else:
     return False
 
-#<--- ONLY FOR ME --->#
-"""
-  This lines of code to be used only when we want to train data
-  It will be used to create dirctory for Train Test Val and sub-catagories of colors under them
-"""
+
 
 
 ttv_cls = ['train/', 'test/', 'val/']
 color_cls = ['black', 'blue', 'green', 'red',  'transparent', 'white', 'yellow']
-#UNCOMMENT IF REQUIRED TO RUN
-"""
-for cls in ttv_cls:
-  os.mkdir('/home/henishv5/WI_Testing/color_dataset/' + cls)
-  for c_cls in color_cls:
-    os.mkdir('/home/henishv5/WI_Testing/color_dataset/' + cls + c_cls)
-"""
-#Function to copy file to the destined folder
-
-def copy_to_folder(list_of_files, dest_path):
-    for f in list_of_files:
-        try:
-            shutil.copy(f, dest_path)
-        except Exception as e:
-            print(e)
-
-def get_py_path():
-    return str(os.getcwd()) + '/'
 
 #Function to copy file to the destined folder
-
-def move_to_folder(list_of_files, dest_path):
-  for f in list_of_files:
-    try:
-      shutil.move(f, dest_path)
-    except Exception as e:
-      print(e)
 
 
 def train_color_model():
-    #To divide dataset into training set, validation set, test set
-    """
-    for c_cls in color_cls:
-      data_images = []
-      for i in os.listdir('/home/henishv5/WI_Testing/color_dataset/' + c_cls):
-        print(i)
-        if is_image(i):
-          data_images.append('/home/henishv5/WI_Testing/color_dataset/' + c_cls + i)
-      data_images.sort()
-      print(data_images)
-      train_images, val_images = train_test_split(data_images, test_size = 0.2, random_state = 1)
-      val_images, test_images = train_test_split(val_images, test_size = 0.5, random_state = 1)
-      print(len(val_images))
-      move_to_folder(train_images, '/home/henishv5/WI_Testing/color_dataset/train/' + c_cls)
-      move_to_folder(test_images, '/home/henishv5/WI_Testing/color_dataset/test/' + c_cls)
-      move_to_folder(val_images, '/home/henishv5/WI_Testing/color_dataset/val/' + c_cls)
-      """
     dir_ = '/home/henishv5/WI_Testing/color_dataset/'
 
     # ImageDataGenerator for training
@@ -275,7 +225,7 @@ def train_color_model():
     #os.mkdir('/home/henishv5/WI_Testing/color_models_v1/')
     #os.mkdir('/home/henishv5/WI_Testing/color_models_v1/ep_50')
 
-    filepath = '/home/henishv5/WI_Testing/color_model_v1/color_weights.hdf5'
+    filepath = '/home/henishv5/wi_required/color_model/'
     checkpoint = ModelCheckpoint(filepath, 
                                 monitor='val_accuracy', 
                                 verbose=1, 
@@ -362,7 +312,7 @@ def predict_class(dest_path, image_, cs):
     img_array = tf.keras.utils.img_to_array(img)
     img_array = tf.expand_dims(img_array, 0) # Create a batch
     model = load_model(
-        get_py_path() + 'wi_vision/WI_required/color_model')
+        get_py_path() + 'wi_required/color_model')
     predictions = model.predict(img_array, verbose = 0)
     predicted_class_indices=int(np.argmax(predictions,axis=1))
     x = color_cls[predicted_class_indices]
