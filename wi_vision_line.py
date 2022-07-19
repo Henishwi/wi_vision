@@ -66,6 +66,11 @@ def process_dest(dest_path):
         except Exception as e:
             print('creating crop {}'.format(e))
         try:
+            if 'unknown' not in os.listdir(crop_loc):
+                os.mkdir(crop_loc + 'unknown/')
+        except Exception as e:
+            print('creating crop {}'.format(e))
+        try:
             for x in get_labels():
                 if x not in os.listdir(crop_loc):
                     os.mkdir(crop_loc + x + '/')
@@ -96,6 +101,7 @@ def start_detection(img_, dest_loc, crop_loc):
         label_path = dest_loc + 'exp/labels/' + img_name_[0] + '.txt'
         with open(label_path) as file_:
                 lines = file_.readlines()
+                img_rect = img_final.copy()
                 for line in lines:
                     i, x_cen, y_cen, wi, hi = line.split(' ')
                     i = int(i)
@@ -106,12 +112,14 @@ def start_detection(img_, dest_loc, crop_loc):
                     #For incrementing counter
                     counter[i] = counter[i] + 1
                     roi = img_final[(y_cen-int(hi/2)+5):(y_cen+int(hi/2)), (x_cen-int(wi/2)+5):(x_cen+int(wi/2))]
+                    img_rect = cv2.rectangle(img_rect, [(x_cen-int(wi/2)+5), (y_cen-int(hi/2)+5)], [(x_cen+int(wi/2)),(y_cen+int(hi/2))], (0,255,0), thickness=2)
                     if i != 10:
                         cv2.imwrite(
                             crop_loc + labels[i] + '/' + img_name_[0] + '_' + labels[i]+ '_' + str(counter[i]) + '.jpg', roi)
                     else:
                         cv2.imwrite(
-                            crop_loc + 'unknown/' + img_name_[0] + '_unknown_' + str(counter[i]) + '.jpg', roi)
+                            crop_loc + 'unknown/' + img_name_[0] + '.jpg', img_rect)
+                        copy_to_folder([label_path], crop_loc + 'unknown/')
 
 
 #Get weight File function
