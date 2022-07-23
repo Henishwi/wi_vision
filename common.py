@@ -3,7 +3,7 @@ import os
 import shutil
 import cv2
 import rosbag
-from cv_bridge import CvBridge
+
 
 def is_image(img_):
     try:
@@ -37,7 +37,7 @@ def process_bagfiles(bag_path, topic_name):
         if 'Bag_Images' not in os.listdir(get_py_path() + 'OUTPUT/'):
                 os.mkdir(output_dir)
         count = len(os.listdir(output_dir)) + 1
-        
+        from cv_bridge import CvBridge
         bag = rosbag.Bag(bag_file, "r")
         bridge = CvBridge()
         for topic, msg, t in bag.read_messages(topics=[image_topic]):
