@@ -17,3 +17,4 @@ WI_required/color_model/saved_model.pb
 WI_required/pet_model/saved_model.pb
 *.pb
 *.pb
+latest_dataset.txt
